@@ -18,6 +18,9 @@ export const NsHttpClientLive = Layer.effect(
     const baseClient = yield* HttpClient.HttpClient;
 
     return baseClient.pipe(
+      HttpClient.withSpanNameGenerator(
+        (request) => `ns-api ${request.method} ${request.url}`,
+      ),
       HttpClient.mapRequest(
         HttpClientRequest.prependUrl(
           "https://gateway.apiportal.ns.nl/reisinformatie-api/api",

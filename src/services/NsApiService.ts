@@ -21,6 +21,9 @@ export class NsApiService extends Context.Tag("NsApiService")<
     readonly getTrips: (
       fromCode: string,
       toCode: string,
+      disabledTransportModalities?: string[],
+      dateTime?: string,
+      searchForArrival?: boolean,
     ) => Effect.Effect<Schemas.TripsResponse, NsApiError | ParseError>;
   }
 >() {}
@@ -38,6 +41,7 @@ export const NsApiServiceLive = Layer.effect(
           Effect.flatMap(
             HttpClientResponse.schemaBodyJson(Schemas.DeparturesResponse),
           ),
+
           Effect.mapError((error) => {
             if (HttpClientError.isHttpClientError(error)) {
               return new NsApiError({
@@ -54,20 +58,59 @@ export const NsApiServiceLive = Layer.effect(
               cause: error,
             });
           }),
+          Effect.tapError((error) =>
+            Effect.logError("Failed to fetch departures").pipe(
+              Effect.annotateLogs({
+                station: stationCode,
+                error: error.message,
+              })
+            )
+          ),
         );
 
         return response;
       });
 
-    const getTrips = (fromCode: string, toCode: string) =>
+    const getTrips = (
+      fromCode: string,
+      toCode: string,
+      disabledTransportModalities?: string[],
+      dateTime?: string,
+      searchForArrival?: boolean,
+    ) =>
       Effect.gen(function* () {
-        const response = yield* HttpClientRequest.get(`/v3/trips`).pipe(
+        let request = HttpClientRequest.get(`/v3/trips`).pipe(
           HttpClientRequest.setUrlParam("fromStation", fromCode),
           HttpClientRequest.setUrlParam("toStation", toCode),
+        );
+
+        if (
+          disabledTransportModalities &&
+          disabledTransportModalities.length > 0
+        ) {
+          request = HttpClientRequest.setUrlParam(
+            "disabledTransportModalities",
+            disabledTransportModalities.join(","),
+          )(request);
+        }
+
+        if (dateTime) {
+          request = HttpClientRequest.setUrlParam("dateTime", dateTime)(request);
+        }
+
+        if (searchForArrival !== undefined) {
+          request = HttpClientRequest.setUrlParam(
+            "searchForArrival",
+            String(searchForArrival),
+          )(request);
+        }
+
+        const response = yield* request.pipe(
           httpClient.execute,
           Effect.flatMap(
             HttpClientResponse.schemaBodyJson(Schemas.TripsResponse),
           ),
+
           Effect.mapError((error) => {
             if (HttpClientError.isHttpClientError(error)) {
               return new NsApiError({
@@ -83,6 +126,24 @@ export const NsApiServiceLive = Layer.effect(
               message: `Failed to parse trips response: ${error}`,
               cause: error,
             });
+          }),
+          Effect.tapError((error) =>
+            Effect.logError("Failed to fetch trips").pipe(
+              Effect.annotateLogs({
+                from: fromCode,
+                to: toCode,
+                error: error.message,
+              })
+            )
+          ),
+          Effect.withSpan("ns.getTrips", {
+            attributes: {
+              from: fromCode,
+              to: toCode,
+              disabledModalities: disabledTransportModalities?.join(",") ?? null,
+              dateTime: dateTime ?? null,
+              searchForArrival: searchForArrival ?? null,
+            },
           }),
         );
 

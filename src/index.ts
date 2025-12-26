@@ -34,18 +34,19 @@ app.all("/mcp", async (c) => {
   return transport.handleRequest(c);
 });
 
-// Get port from runtime config
-const port = await AppRuntime.runPromise(
-  AppConfig.pipe(Effect.map((config) => config.port)),
+// Start server with logging
+await AppRuntime.runPromise(
+  Effect.gen(function* () {
+    const config = yield* AppConfig;
+    yield* Effect.logInfo(`Starting NS MCP Server on port ${config.port}...`);
+
+    Bun.serve({
+      port: config.port,
+      fetch(req) {
+        return app.fetch(req);
+      },
+    });
+
+    yield* Effect.logInfo(`NS MCP Server running on http://localhost:${config.port}`);
+  })
 );
-
-console.log(`Starting NS MCP Server on port ${port}...`);
-
-Bun.serve({
-  port,
-  fetch(req) {
-    return app.fetch(req);
-  },
-});
-
-console.log(`NS MCP Server running on http://localhost:${port}`);
