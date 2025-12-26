@@ -136,15 +136,6 @@ export const NsApiServiceLive = Layer.effect(
               })
             )
           ),
-          Effect.withSpan("ns.getTrips", {
-            attributes: {
-              from: fromCode,
-              to: toCode,
-              disabledModalities: disabledTransportModalities?.join(",") ?? null,
-              dateTime: dateTime ?? null,
-              searchForArrival: searchForArrival ?? null,
-            },
-          }),
         );
 
         return response;
