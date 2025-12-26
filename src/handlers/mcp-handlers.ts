@@ -3,7 +3,7 @@
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { Effect, Match, Option } from "effect";
+import { Duration, Effect, Match, Option } from "effect";
 import { z } from "zod";
 import * as chrono from "chrono-node";
 import { format, toZonedTime } from "date-fns-tz";
@@ -183,12 +183,14 @@ export function registerTools(
               )
             : undefined;
 
-        const data = yield* nsApiService.getTrips(
-          fromCode,
-          toCode,
-          disabledTypes,
-          date_time,
-          search_for_arrival,
+        const [nsApiDuration, data] = yield* Effect.timed(
+          nsApiService.getTrips(
+            fromCode,
+            toCode,
+            disabledTypes,
+            date_time,
+            search_for_arrival,
+          ),
         );
 
         // Client-side filtering (in case API doesn't support filtering)
@@ -235,6 +237,7 @@ export function registerTools(
           Effect.annotateLogs({
             fromCode,
             toCode,
+            nsApiDurationMs: Duration.toMillis(nsApiDuration),
             totalTrips: data.trips.length,
             filteredTrips: filteredTrips.length,
             returnedTrips: tripsToShow.length,
@@ -362,7 +365,9 @@ export function registerTools(
 
         const stationCode = maybeStationCode.value;
 
-        const data = yield* nsApiService.getDepartures(stationCode);
+        const [nsApiDuration, data] = yield* Effect.timed(
+          nsApiService.getDepartures(stationCode),
+        );
 
         // Client-side filtering
         const filteredDepartures =
@@ -395,6 +400,7 @@ export function registerTools(
         yield* Effect.logInfo("get_departures summary").pipe(
           Effect.annotateLogs({
             stationCode,
+            nsApiDurationMs: Duration.toMillis(nsApiDuration),
             totalDepartures: data.payload.departures.length,
             filteredDepartures: filteredDepartures.length,
             returnedDepartures: departures.length,
