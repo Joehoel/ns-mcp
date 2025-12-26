@@ -1,0 +1,28 @@
+{
+  "name": "ns-mcp-server",
+  "version": "1.0.0",
+  "description": "Nederlandse Spoorwegen MCP Server",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "prepare": "effect-language-service patch"
+  },
+  "dependencies": {
+    "@effect/platform": "^0.94.0",
+    "@effect/platform-bun": "^0.87.0",
+    "@effect/platform-node": "^0.83.0",
+    "@effect/schema": "^0.75.5",
+    "@hono/mcp": "^0.2.3",
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "effect": "^3.19.13",
+    "fuzzball": "^2.2.3",
+    "hono": "^4.7.0"
+  },
+  "devDependencies": {
+    "@effect/language-service": "^0.62.5",
+    "@types/bun": "latest",
+    "typescript": "^5.7.0"
+  }
+}
