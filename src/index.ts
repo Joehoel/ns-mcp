@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPTransport } from "@hono/mcp";
 import { Hono } from "hono";
+import { serveStatic } from "hono/bun";
 
 import { AppConfig } from "./config";
 import { AppRuntime } from "./layers/AppLayer";
@@ -8,6 +9,10 @@ import { registerTools } from "./handlers/mcp-handlers";
 import { Effect } from "effect";
 
 const app = new Hono();
+
+// Static assets
+app.get("/favicon.png", serveStatic({ path: "./public/favicon.png" }));
+app.get("/favicon.ico", (c) => c.redirect("/favicon.png", 301));
 
 // Health check endpoint
 app.get("/", (c) => {
