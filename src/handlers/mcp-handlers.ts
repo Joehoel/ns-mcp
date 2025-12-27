@@ -31,6 +31,16 @@ function calculateDelayMinutes(
 }
 
 /**
+ * Get current time in Amsterdam timezone as ISO string
+ */
+function getCurrentTimeAmsterdam(): string {
+  const now = new Date();
+  const amsterdamTz = "Europe/Amsterdam";
+  const zonedDate = toZonedTime(now, amsterdamTz);
+  return format(zonedDate, "yyyy-MM-dd'T'HH:mm:ssXXX", { timeZone: amsterdamTz });
+}
+
+/**
  * Zod schema for transportation types parameter
  */
 const transportationTypesSchema = z
@@ -251,6 +261,7 @@ export function registerTools(
         return {
           success: true,
           data: {
+            currentTime: getCurrentTimeAmsterdam(),
             from: from_station,
             to: to_station,
             trips: tripsToShow.map((trip) => ({
@@ -289,6 +300,7 @@ export function registerTools(
                 },
               })),
             })),
+            fullResponse: data,
           },
         };
       }).pipe(
@@ -411,6 +423,7 @@ export function registerTools(
         return {
           success: true,
           data: {
+            currentTime: getCurrentTimeAmsterdam(),
             station: station,
             departures: departures.map((dep) => ({
               type: dep.product?.type ?? "TRAIN",
@@ -433,6 +446,7 @@ export function registerTools(
                   : null,
               cancelled: dep.cancelled,
             })),
+            fullResponse: data,
           },
         };
       }).pipe(
